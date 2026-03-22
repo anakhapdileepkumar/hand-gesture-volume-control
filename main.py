@@ -78,7 +78,19 @@ while True:
                 vol = np.interp(length, [20, 200], [minVol, maxVol])
                 volume.SetMasterVolumeLevel(vol, None)
 
+                # Map distance to volume bar and percentage
+                volBar = np.interp(length, [20, 200], [400, 150])
+                volPer = np.interp(length, [20, 200], [0, 100])
+
                 print("Distance:", length, "Volume:", vol)
+
+                # Draw volume bar
+                cv2.rectangle(img, (50, 150), (85, 400), (0, 255, 0), 3)
+                cv2.rectangle(img, (50, int(volBar)), (85, 400), (0, 255, 0), cv2.FILLED)
+
+                # Display percentage
+                cv2.putText(img, f'{int(volPer)} %', (40, 430),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
 
             # Draw hand landmarks
             mp_draw.draw_landmarks(img, handLms, mp_hands.HAND_CONNECTIONS)
