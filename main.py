@@ -1,15 +1,37 @@
 import cv2
 import mediapipe as mp
 import math
+import numpy as np
+import comtypes
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 # Initialize MediaPipe
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
-
 mp_draw = mp.solutions.drawing_utils
 
 # Start webcam
 cap = cv2.VideoCapture(0)
+
+# Initialize COM
+comtypes.CoInitialize()
+
+# Volume control setup
+devices = AudioUtilities.GetSpeakers()
+
+interface = devices._dev.Activate(
+    IAudioEndpointVolume._iid_,
+    CLSCTX_ALL,
+    None
+)
+
+volume = cast(interface, POINTER(IAudioEndpointVolume))
+
+volRange = volume.GetVolumeRange()
+minVol = volRange[0]
+maxVol = volRange[1]
 
 while True:
     success, img = cap.read()
@@ -17,7 +39,7 @@ while True:
     if not success:
         break
 
-    # Convert BGR → RGB
+    # Convert BGR to RGB
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     # Process image
@@ -26,7 +48,7 @@ while True:
     # Check if hand is detected
     if results.multi_hand_landmarks:
         for handLms in results.multi_hand_landmarks:
-            
+
             lmList = []
 
             # Get all landmark positions
@@ -35,7 +57,6 @@ while True:
                 cx, cy = int(lm.x * w), int(lm.y * h)
                 lmList.append((id, cx, cy))
 
-            # Make sure list is not empty
             if len(lmList) != 0:
                 # Thumb tip
                 x1, y1 = lmList[4][1], lmList[4][2]
@@ -53,7 +74,11 @@ while True:
                 # Calculate distance
                 length = math.hypot(x2 - x1, y2 - y1)
 
-                print("Distance:", length)
+                # Map distance to volume
+                vol = np.interp(length, [20, 200], [minVol, maxVol])
+                volume.SetMasterVolumeLevel(vol, None)
+
+                print("Distance:", length, "Volume:", vol)
 
             # Draw hand landmarks
             mp_draw.draw_landmarks(img, handLms, mp_hands.HAND_CONNECTIONS)
