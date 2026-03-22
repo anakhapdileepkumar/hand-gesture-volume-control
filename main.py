@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import math
 
 # Initialize MediaPipe
 mp_hands = mp.solutions.hands
@@ -25,7 +26,36 @@ while True:
     # Check if hand is detected
     if results.multi_hand_landmarks:
         for handLms in results.multi_hand_landmarks:
-            # Draw landmarks
+            
+            lmList = []
+
+            # Get all landmark positions
+            for id, lm in enumerate(handLms.landmark):
+                h, w, c = img.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                lmList.append((id, cx, cy))
+
+            # Make sure list is not empty
+            if len(lmList) != 0:
+                # Thumb tip
+                x1, y1 = lmList[4][1], lmList[4][2]
+
+                # Index tip
+                x2, y2 = lmList[8][1], lmList[8][2]
+
+                # Draw circles
+                cv2.circle(img, (x1, y1), 10, (0, 255, 0), cv2.FILLED)
+                cv2.circle(img, (x2, y2), 10, (0, 255, 0), cv2.FILLED)
+
+                # Draw line
+                cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
+
+                # Calculate distance
+                length = math.hypot(x2 - x1, y2 - y1)
+
+                print("Distance:", length)
+
+            # Draw hand landmarks
             mp_draw.draw_landmarks(img, handLms, mp_hands.HAND_CONNECTIONS)
 
     cv2.imshow("Hand Detection", img)
