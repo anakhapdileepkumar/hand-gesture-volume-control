@@ -33,6 +33,9 @@ volRange = volume.GetVolumeRange()
 minVol = volRange[0]
 maxVol = volRange[1]
 
+# Smooth volume variable
+smoothVol = 0
+
 while True:
     success, img = cap.read()
 
@@ -76,13 +79,16 @@ while True:
 
                 # Map distance to volume
                 vol = np.interp(length, [20, 200], [minVol, maxVol])
-                volume.SetMasterVolumeLevel(vol, None)
+
+                # Smooth volume control
+                smoothVol = smoothVol + (vol - smoothVol) / 5
+                volume.SetMasterVolumeLevel(smoothVol, None)
 
                 # Map distance to volume bar and percentage
                 volBar = np.interp(length, [20, 200], [400, 150])
                 volPer = np.interp(length, [20, 200], [0, 100])
 
-                print("Distance:", length, "Volume:", vol)
+                print("Distance:", length, "Volume:", smoothVol)
 
                 # Draw volume bar
                 cv2.rectangle(img, (50, 150), (85, 400), (0, 255, 0), 3)
