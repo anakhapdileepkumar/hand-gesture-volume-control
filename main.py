@@ -77,12 +77,20 @@ while True:
                 # Calculate distance
                 length = math.hypot(x2 - x1, y2 - y1)
 
-                # Map distance to volume
-                vol = np.interp(length, [20, 200], [minVol, maxVol])
+                # Mute gesture
+                if length < 25:
+                    volume.SetMute(1, None)
+                    cv2.putText(img, "MUTED", (200, 50),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+                else:
+                    volume.SetMute(0, None)
 
-                # Smooth volume control
-                smoothVol = smoothVol + (vol - smoothVol) / 5
-                volume.SetMasterVolumeLevel(smoothVol, None)
+                    # Map distance to volume
+                    vol = np.interp(length, [20, 200], [minVol, maxVol])
+
+                    # Smooth volume control
+                    smoothVol = smoothVol + (vol - smoothVol) / 5
+                    volume.SetMasterVolumeLevel(smoothVol, None)
 
                 # Map distance to volume bar and percentage
                 volBar = np.interp(length, [20, 200], [400, 150])
